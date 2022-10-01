@@ -1,0 +1,55 @@
+{{define "header"}}
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TTLock2Mqtt</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+</head>
+
+{{if index . "modal"}}
+
+<body class="modal-open">
+  {{else}}
+  <body>
+    {{end}}
+    <header class="p-3 text-bg-dark">
+      <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+          <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none me-xl-3">
+            TTLock2Mqtt
+          </a>
+          <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+            <li><a href="/credentials" class="nav-link px-2 text-secondary">Credentials</a></li>
+            <li><a href="/locks" class="nav-link px-2 text-white">Locks</a></li>
+            <li><a href="/mqtt" class="nav-link px-2 text-white">Mqtt</a></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+    <div class="col-lg-8 mx-auto p-4 py-md-5">
+      {{range .errors}}
+      <div class="alert alert-danger" role="alert">
+        {{ . }}
+      </div>
+      {{end}}
+      <main>
+        {{end}}
+
+        {{define "footer"}}
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8"
+      crossorigin="anonymous"></script>
+    {{if index . "modal"}}
+    <div class="modal-backdrop fade show"></div>
+    {{end}}
+  </body>
+
+</html>
+{{end}}

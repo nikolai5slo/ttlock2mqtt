@@ -1,0 +1,12 @@
+{{template "header" .}}
+<article>
+  <h2>Managed Locks</h2>
+  <ul class="list-group mb-3">
+    {{range .locks}}
+    <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+      {{ .LockAlias }} - {{ .LockId }}
+    </li>
+    {{end}}
+  </ul>
+</article>
+{{template "footer" .}}

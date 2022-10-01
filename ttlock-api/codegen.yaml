@@ -1,0 +1,5 @@
+package: ttlockapi
+generate:
+  client: true
+  models: true
+output: ttlock.gen.go
