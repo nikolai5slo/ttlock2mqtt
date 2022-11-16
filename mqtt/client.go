@@ -89,7 +89,7 @@ func (m *HAMqtt) Close() error {
 }
 
 func (m *HAMqtt) MqttLockCommandCallback(l locks.ManagedLock, callback func(ttlock.LockStatus)) error {
-	token := m.client.Subscribe(fmt.Sprintf("ttlock2mqtt/%d/command", l.LockId), 0, func(c mqtt.Client, m mqtt.Message) {
+	token := m.client.Subscribe(fmt.Sprintf("ttlock2mqtt/%d/command", l.LockId), 1, func(c mqtt.Client, m mqtt.Message) {
 		switch string(m.Payload()) {
 		case "LOCK":
 			callback(ttlock.Locked)
@@ -105,10 +105,6 @@ func (m *HAMqtt) MqttLockCommandCallback(l locks.ManagedLock, callback func(ttlo
 
 // Introduce
 func (m *HAMqtt) IntroduceLock(l locks.ManagedLock) error {
-	if !m.client.IsConnected() {
-		return fmt.Errorf("mqtt not connected")
-	}
-
 	lockConfig := &MqttLockConfig{
 		CommandTopic: fmt.Sprintf("ttlock2mqtt/%d/command", l.LockId),
 		StateTopic:   fmt.Sprintf("ttlock2mqtt/%d/state", l.LockId),
@@ -127,7 +123,7 @@ func (m *HAMqtt) IntroduceLock(l locks.ManagedLock) error {
 		return fmt.Errorf("could not serialize lock config object: %w", err)
 	}
 
-	token := m.client.Publish(fmt.Sprintf("homeassistant/lock/ttlock2mqtt/%d/config", l.LockId), 0, false, string(payload))
+	token := m.client.Publish(fmt.Sprintf("homeassistant/lock/ttlock2mqtt/%d/config", l.LockId), 1, true, string(payload))
 
 	token.WaitTimeout(1 * m.timeout)
 
@@ -135,10 +131,6 @@ func (m *HAMqtt) IntroduceLock(l locks.ManagedLock) error {
 }
 
 func (m *HAMqtt) UpdateLockStatus(l locks.ManagedLock, status ttlock.LockStatus) error {
-	if !m.client.IsConnected() {
-		return fmt.Errorf("mqtt not connected")
-	}
-
 	txtStatus := ""
 
 	switch status {
@@ -149,7 +141,7 @@ func (m *HAMqtt) UpdateLockStatus(l locks.ManagedLock, status ttlock.LockStatus)
 	}
 
 	if txtStatus != "" {
-		token := m.client.Publish(fmt.Sprintf("ttlock2mqtt/%d/state", l.LockId), 0, false, txtStatus)
+		token := m.client.Publish(fmt.Sprintf("ttlock2mqtt/%d/state", l.LockId), 1, false, txtStatus)
 
 		token.WaitTimeout(1 * m.timeout)
 

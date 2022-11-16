@@ -187,3 +187,8 @@ func (c *Controller) Refresh() error {
 
 	return nil
 }
+
+func (c *Controller) Close() error {
+	c.mqtt.Close()
+	return nil
+}

@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/schollz/jsonstore"
 	"github.com/nikolai5slo/ttlock2mqtt/controller"
 	"github.com/nikolai5slo/ttlock2mqtt/credentials"
 	"github.com/nikolai5slo/ttlock2mqtt/locks"
@@ -13,6 +13,7 @@ import (
 	"github.com/nikolai5slo/ttlock2mqtt/server/handlers"
 	"github.com/nikolai5slo/ttlock2mqtt/ttlock"
 	ttlockapi "github.com/nikolai5slo/ttlock2mqtt/ttlock-api"
+	"github.com/schollz/jsonstore"
 )
 
 type deps struct {
@@ -27,6 +28,14 @@ type deps struct {
 }
 
 func (d *deps) buildConfig() error {
+	if _, err := os.Stat(".env"); err == nil {
+		err = cleanenv.ReadConfig(".env", &d.cfg)
+
+		if err != nil {
+			log.Printf("cant load .env file: %s", err)
+		}
+	}
+
 	return cleanenv.ReadEnv(&d.cfg)
 }
 
@@ -91,6 +100,7 @@ func (d *deps) buildController() (err error) {
 		controller.WithCredentialsStorage(d.credentialsStorage),
 		controller.WithMqtt(d.mqtt),
 		controller.WithTTlockService(d.ttlockService),
+		controller.WithRefreshRate(d.cfg.TTLock.RefreshInterval),
 	)
 	return
 }
@@ -125,9 +135,7 @@ func main() {
 		log.Panicf("unable to build dependencies: %s", err)
 	}
 
-	d.mqtt.Connect()
-
-	defer d.mqtt.Close()
+	defer d.controller.Close()
 
 	d.controller.StartAutoRefresh()
 
