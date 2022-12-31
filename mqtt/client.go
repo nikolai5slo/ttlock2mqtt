@@ -2,7 +2,9 @@ package mqtt
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -123,11 +125,13 @@ func (m *HAMqtt) IntroduceLock(l locks.ManagedLock) error {
 		return fmt.Errorf("could not serialize lock config object: %w", err)
 	}
 
-	token := m.client.Publish(fmt.Sprintf("homeassistant/lock/ttlock2mqtt/%d/config", l.LockId), 1, true, string(payload))
+	return m.handleError(3, func() error {
+		token := m.client.Publish(fmt.Sprintf("homeassistant/lock/ttlock2mqtt/%d/config", l.LockId), 1, true, string(payload))
 
-	token.WaitTimeout(1 * m.timeout)
+		token.WaitTimeout(1 * m.timeout)
 
-	return token.Error()
+		return token.Error()
+	})
 }
 
 func (m *HAMqtt) UpdateLockStatus(l locks.ManagedLock, status ttlock.LockStatus) error {
@@ -141,12 +145,35 @@ func (m *HAMqtt) UpdateLockStatus(l locks.ManagedLock, status ttlock.LockStatus)
 	}
 
 	if txtStatus != "" {
-		token := m.client.Publish(fmt.Sprintf("ttlock2mqtt/%d/state", l.LockId), 1, false, txtStatus)
+		return m.handleError(3, func() error {
+			token := m.client.Publish(fmt.Sprintf("ttlock2mqtt/%d/state", l.LockId), 1, false, txtStatus)
 
-		token.WaitTimeout(1 * m.timeout)
+			token.WaitTimeout(1 * m.timeout)
 
-		return token.Error()
+			return token.Error()
+		})
 	}
 
 	return nil
+}
+
+func (m *HAMqtt) handleError(retryCount int, closure func() error) error {
+	err := errors.New("no execution")
+
+	for retryCount >= 0 && err != nil {
+		err = closure()
+
+		if err != nil && strings.Contains(strings.ToLower(err.Error()), "not connected") {
+			err = m.Connect()
+
+			// Do not retry if reconnection failed
+			if err != nil {
+				return err
+			}
+		}
+
+		retryCount--
+	}
+
+	return err
 }
