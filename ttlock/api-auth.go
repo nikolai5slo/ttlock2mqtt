@@ -97,7 +97,7 @@ func (s *TTLockAPIService) refreshToken(cred *Credentials) error {
 	return nil
 }
 
-func (s *TTLockAPIService) autoAuth(cred *Credentials, fn func(string, string) (interface{}, error), getBody func(interface{}) []byte) (interface{}, error) {
+func (s *TTLockAPIService) autoAuth(cred *Credentials, fn func(string, string) (interface{}, error), getBody func(interface{}) []byte, retryCount int) (interface{}, error) {
 	response, err := fn(s.clientID, cred.AccessToken)
 
 	if err != nil {
@@ -126,11 +126,17 @@ func (s *TTLockAPIService) autoAuth(cred *Credentials, fn func(string, string) (
 		return fn(s.clientID, cred.AccessToken)
 	}
 
-	// Throttle probably, wait and retry
+	// Failed
 	if *errorResponse.Errcode == 1 {
-		log.Print("Backoff")
-		time.Sleep(1 * time.Second)
-		return fn(s.clientID, cred.AccessToken)
+		for retryCount > 0 {
+			log.Print("Retrying")
+			response, err = fn(s.clientID, cred.AccessToken)
+
+			if err == nil {
+				break
+			}
+			retryCount--
+		}
 	}
 
 	return response, fmt.Errorf("error response: \"%s\" Body: %s", errorResponse.Errmsg, string(body))

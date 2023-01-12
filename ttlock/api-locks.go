@@ -25,7 +25,7 @@ func (s *TTLockAPIService) GetLocks(cred Credentials) ([]Lock, error) {
 		}
 
 		return s.ttlockClient.ListLocksWithResponse(context.TODO(), listLocksParams)
-	}, func(i interface{}) []byte { return i.(*ttlockapi.ListLocksResponse).Body })
+	}, func(i interface{}) []byte { return i.(*ttlockapi.ListLocksResponse).Body }, 1)
 
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (s *TTLockAPIService) GetLockStatus(cred Credentials, l Lock) (LockStatus, 
 		}
 
 		return s.ttlockClient.GetLockOpenStateWithResponse(context.TODO(), getLockOpenStateParams)
-	}, func(i interface{}) []byte { return i.(*ttlockapi.GetLockOpenStateResponse).Body })
+	}, func(i interface{}) []byte { return i.(*ttlockapi.GetLockOpenStateResponse).Body }, 0)
 
 	if err != nil {
 		return Unknown, err
@@ -82,7 +82,7 @@ func (s *TTLockAPIService) Lock(cred Credentials, l Lock) error {
 		data.Add("date", fmt.Sprint(time.Now().UnixMilli()))
 
 		return s.ttlockClient.PostLockWithBodyWithResponse(context.TODO(), "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
-	}, func(i interface{}) []byte { return i.(*ttlockapi.PostLockResponse).Body })
+	}, func(i interface{}) []byte { return i.(*ttlockapi.PostLockResponse).Body }, 3)
 
 	return err
 }
@@ -96,7 +96,7 @@ func (s *TTLockAPIService) Unlock(cred Credentials, l Lock) error {
 		data.Add("date", fmt.Sprint(time.Now().UnixMilli()))
 
 		return s.ttlockClient.PostUnlockWithBodyWithResponse(context.TODO(), "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
-	}, func(i interface{}) []byte { return i.(*ttlockapi.PostUnlockResponse).Body })
+	}, func(i interface{}) []byte { return i.(*ttlockapi.PostUnlockResponse).Body }, 3)
 
 	return err
 }
